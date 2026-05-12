@@ -47,8 +47,8 @@ export function Footer() {
           <div>
             <h4 className="font-display text-sm uppercase tracking-[0.2em] text-gradient-gold mb-4">Contact</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-primary" /> Kochi, Kerala</li>
-              <li className="flex items-start gap-2"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 98 4747 4747</li>
+              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-primary" /> Malappuram, Kerala</li>
+              <li className="flex items-start gap-2"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 8592866008</li>
               <li className="flex items-start gap-2"><Mail className="w-4 h-4 mt-0.5 text-primary" /> hello@eduvocareers.in</li>
             </ul>
           </div>

@@ -40,8 +40,8 @@ function ContactPage() {
         <div className="mt-12 grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2 space-y-4">
             {[
-              { icon: MapPin, title: "Visit", text: "Kakkanad Hub, Kochi 682030" },
-              { icon: Phone, title: "Call", text: "+91 98 4747 4747" },
+              { icon: MapPin, title: "Visit", text: "Cherukulamba, malappuram , 676504" },
+              { icon: Phone, title: "Call", text: "+91 8592866008" },
               { icon: Mail, title: "Email", text: "hello@eduvocareers.in" },
               { icon: MessageCircle, title: "WhatsApp", text: "Tap the floating button" },
             ].map((i, idx) => (
