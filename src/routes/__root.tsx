@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFab } from "@/components/site/WhatsAppFab";
+import { FloatingOrbs, ScrollProgress, PageLoader } from "@/components/site/Atmosphere";
 
 function NotFoundComponent() {
   return (
@@ -88,7 +89,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col">
+      <PageLoader />
+      <ScrollProgress />
+      <FloatingOrbs />
+      <div className="min-h-screen flex flex-col relative z-10">
         <Navbar />
         <main className="flex-1 pt-24">
           <Outlet />

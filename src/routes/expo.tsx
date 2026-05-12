@@ -5,6 +5,9 @@ import QRCode from "qrcode";
 import { Calendar, MapPin, CheckCircle2, Download, Ticket, ArrowRight } from "lucide-react";
 import { districts, courses } from "@/lib/mock-data";
 import { FadeIn, SectionLabel } from "@/components/site/Motion";
+import { Countdown } from "@/components/site/Countdown";
+
+const EXPO_DATE = new Date("2026-02-14T09:00:00+05:30");
 
 export const Route = createFileRoute("/expo")({
   head: () => ({
@@ -57,6 +60,9 @@ function ExpoPage() {
             <div className="mt-5 flex flex-wrap justify-center gap-5 text-sm text-muted-foreground">
               <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> 14–15 February 2026</span>
               <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Le Meridien, Kochi</span>
+            </div>
+            <div className="mt-8 max-w-md mx-auto">
+              <Countdown target={EXPO_DATE} />
             </div>
           </div>
         </FadeIn>

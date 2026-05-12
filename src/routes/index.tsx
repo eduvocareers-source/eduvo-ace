@@ -4,6 +4,9 @@ import { ArrowRight, Sparkles, Star, MapPin, Calendar, TrendingUp, Brain, Award,
 import heroImg from "@/assets/hero.jpg";
 import { colleges, courses, testimonials, stats } from "@/lib/mock-data";
 import { Counter, FadeIn, SectionLabel } from "@/components/site/Motion";
+import { Countdown } from "@/components/site/Countdown";
+
+const EXPO_DATE = new Date("2026-02-14T09:00:00+05:30");
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -304,12 +307,15 @@ function UpcomingExpo() {
                   <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Le Meridien, Kochi</div>
                 </div>
               </div>
-              <Link
-                to="/expo"
-                className="group inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-gold text-primary-foreground font-semibold shadow-glow"
-              >
-                Get free QR ticket <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              <div className="space-y-4">
+                <Countdown target={EXPO_DATE} />
+                <Link
+                  to="/expo"
+                  className="group w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-gold text-primary-foreground font-semibold shadow-glow"
+                >
+                  Get free QR ticket <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </div>
         </FadeIn>
