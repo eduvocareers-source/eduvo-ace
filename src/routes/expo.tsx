@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { z } from "zod";
 import { Calendar, MapPin, CheckCircle2, Ticket, ArrowRight, AlertCircle } from "lucide-react";
-import { districts, courses } from "@/lib/mock-data";
+import { districts } from "@/lib/mock-data";
 import { FadeIn, SectionLabel } from "@/components/site/Motion";
 import { Countdown } from "@/components/site/Countdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,12 +20,19 @@ export const Route = createFileRoute("/expo")({
   component: ExpoPage,
 });
 
+const STREAMS = ["Science (Bio)", "Science (Computer)", "Science (Maths)", "Commerce", "Humanities", "Vocational", "Other"];
+const GUIDANCE = ["Course selection", "College selection", "Career discovery", "Scholarship & finance", "Study abroad pathway", "Entrance exam strategy"];
+const STUDY_LOC = ["India", "Abroad", "Open to both"];
+
 const schema = z.object({
   name: z.string().trim().min(2, "Enter your full name").max(80),
   phone: z.string().regex(/^\d{10}$/, "Enter a 10-digit number"),
   email: z.string().trim().email("Invalid email").max(120).optional().or(z.literal("")),
   district: z.string().min(1, "Select a district"),
-  course: z.string().min(1, "Select a course"),
+  stream: z.string().min(1, "Select your Plus Two stream"),
+  guidance: z.string().min(1, "Tell us what guidance you need"),
+  study_location: z.string().min(1, "Select study preference"),
+  parent_attending: z.enum(["yes", "no"], { message: "Let us know if a parent is attending" }),
 });
 type Form = z.infer<typeof schema>;
 
@@ -35,12 +42,15 @@ function makeTicketId() {
 
 function ExpoPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState<Form>({ name: "", phone: "", email: "", district: "", course: "" });
+  const [form, setForm] = useState<Form>({
+    name: "", phone: "", email: "", district: "",
+    stream: "", guidance: "", study_location: "", parent_attending: "" as "yes" | "no",
+  });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const update = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm({ ...form, [k]: e.target.value });
+    setForm({ ...form, [k]: e.target.value as never });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +68,10 @@ function ExpoPage() {
       phone: parsed.data.phone,
       email: parsed.data.email || null,
       district: parsed.data.district,
-      course: parsed.data.course,
+      stream: parsed.data.stream,
+      guidance: parsed.data.guidance,
+      study_location: parsed.data.study_location,
+      parent_attending: parsed.data.parent_attending === "yes",
     });
     setSubmitting(false);
     if (dbError) {
@@ -92,7 +105,7 @@ function ExpoPage() {
         >
           <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 sm:p-10 shadow-elevated">
             <h2 className="font-display text-2xl">Register in under a minute</h2>
-            <p className="text-sm text-muted-foreground mt-1">We'll generate a QR ticket instantly.</p>
+            <p className="text-sm text-muted-foreground mt-1">We'll generate your premium QR ticket instantly.</p>
 
             <div className="mt-7 grid sm:grid-cols-2 gap-4">
               <Field label="Full name">
@@ -110,10 +123,29 @@ function ExpoPage() {
                   {districts.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </Field>
-              <Field label="Interested course">
-                <select value={form.course} onChange={update("course")} className="input" required>
-                  <option value="">Select course</option>
-                  {courses.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+              <Field label="Plus Two stream">
+                <select value={form.stream} onChange={update("stream")} className="input" required>
+                  <option value="">Select stream</option>
+                  {STREAMS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="Guidance you're looking for">
+                <select value={form.guidance} onChange={update("guidance")} className="input" required>
+                  <option value="">Select guidance</option>
+                  {GUIDANCE.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </Field>
+              <Field label="Planning to study">
+                <select value={form.study_location} onChange={update("study_location")} className="input" required>
+                  <option value="">Select preference</option>
+                  {STUDY_LOC.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="Parent attending with you?">
+                <select value={form.parent_attending} onChange={update("parent_attending")} className="input" required>
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
                 </select>
               </Field>
             </div>
@@ -129,7 +161,7 @@ function ExpoPage() {
               disabled={submitting}
               className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-gold text-primary-foreground font-semibold shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Generating..." : (<>Generate QR Ticket <ArrowRight className="w-4 h-4" /></>)}
+              {submitting ? "Generating..." : (<>Generate Premium Ticket <ArrowRight className="w-4 h-4" /></>)}
             </button>
             <p className="mt-3 text-xs text-muted-foreground">By registering you agree to receive event reminders on WhatsApp.</p>
           </form>
@@ -142,7 +174,8 @@ function ExpoPage() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {[
                   "Free entry both days",
-                  "On-spot counselling with admissions team",
+                  "1-on-1 counselling with admissions teams",
+                  "Discover suitable courses & careers",
                   "Scholarship & finance desks",
                   "Live aptitude analysis with Dr ACE",
                   "Goodie bag from partner colleges",

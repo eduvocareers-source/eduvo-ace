@@ -22,7 +22,10 @@ type Reg = {
   phone: string;
   email: string | null;
   district: string;
-  course: string;
+  stream: string | null;
+  guidance: string | null;
+  study_location: string | null;
+  parent_attending: boolean | null;
   checked_in: boolean;
   created_at: string;
 };
@@ -71,7 +74,8 @@ function AdminPage() {
       r.phone.includes(s) ||
       r.ticket_id.toLowerCase().includes(s) ||
       r.district.toLowerCase().includes(s) ||
-      r.course.toLowerCase().includes(s)
+      (r.stream ?? "").toLowerCase().includes(s) ||
+      (r.guidance ?? "").toLowerCase().includes(s)
     );
   }, [regs, q]);
 
@@ -82,9 +86,11 @@ function AdminPage() {
   }), [regs]);
 
   const exportCSV = () => {
-    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Course", "Checked In", "Registered At"];
+    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Registered At"];
     const rows = filtered.map((r) => [
-      r.ticket_id, r.name, r.phone, r.email ?? "", r.district, r.course,
+      r.ticket_id, r.name, r.phone, r.email ?? "", r.district,
+      r.stream ?? "", r.guidance ?? "", r.study_location ?? "",
+      r.parent_attending == null ? "" : r.parent_attending ? "Yes" : "No",
       r.checked_in ? "Yes" : "No", new Date(r.created_at).toISOString(),
     ]);
     const csv = [header, ...rows]
@@ -179,17 +185,20 @@ function AdminPage() {
                   <th className="py-3 pr-3">Name</th>
                   <th className="py-3 pr-3">Phone</th>
                   <th className="py-3 pr-3">District</th>
-                  <th className="py-3 pr-3">Course</th>
+                  <th className="py-3 pr-3">Stream</th>
+                  <th className="py-3 pr-3">Guidance</th>
+                  <th className="py-3 pr-3">Study</th>
+                  <th className="py-3 pr-3">Parent</th>
                   <th className="py-3 pr-3">When</th>
                   <th className="py-3 pr-3">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {fetching && (
-                  <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
+                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
                 )}
                 {!fetching && filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
+                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
                 )}
                 {filtered.map((r) => (
                   <motion.tr
@@ -206,7 +215,10 @@ function AdminPage() {
                     <td className="py-3 pr-3">{r.name}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.phone}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.district}</td>
-                    <td className="py-3 pr-3 text-muted-foreground">{r.course}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.stream ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.guidance ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.study_location ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.parent_attending == null ? "—" : r.parent_attending ? "Yes" : "No"}</td>
                     <td className="py-3 pr-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="py-3 pr-3">
                       <button

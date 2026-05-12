@@ -17,37 +17,49 @@ export type Database = {
       expo_registrations: {
         Row: {
           checked_in: boolean
-          course: string
+          course: string | null
           created_at: string
           district: string
           email: string | null
+          guidance: string | null
           id: string
           name: string
+          parent_attending: boolean | null
           phone: string
+          stream: string | null
+          study_location: string | null
           ticket_id: string
           user_id: string | null
         }
         Insert: {
           checked_in?: boolean
-          course: string
+          course?: string | null
           created_at?: string
           district: string
           email?: string | null
+          guidance?: string | null
           id?: string
           name: string
+          parent_attending?: boolean | null
           phone: string
+          stream?: string | null
+          study_location?: string | null
           ticket_id: string
           user_id?: string | null
         }
         Update: {
           checked_in?: boolean
-          course?: string
+          course?: string | null
           created_at?: string
           district?: string
           email?: string | null
+          guidance?: string | null
           id?: string
           name?: string
+          parent_attending?: boolean | null
           phone?: string
+          stream?: string | null
+          study_location?: string | null
           ticket_id?: string
           user_id?: string | null
         }
