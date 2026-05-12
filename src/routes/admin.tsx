@@ -185,17 +185,20 @@ function AdminPage() {
                   <th className="py-3 pr-3">Name</th>
                   <th className="py-3 pr-3">Phone</th>
                   <th className="py-3 pr-3">District</th>
-                  <th className="py-3 pr-3">Course</th>
+                  <th className="py-3 pr-3">Stream</th>
+                  <th className="py-3 pr-3">Guidance</th>
+                  <th className="py-3 pr-3">Study</th>
+                  <th className="py-3 pr-3">Parent</th>
                   <th className="py-3 pr-3">When</th>
                   <th className="py-3 pr-3">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {fetching && (
-                  <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
+                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
                 )}
                 {!fetching && filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
+                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
                 )}
                 {filtered.map((r) => (
                   <motion.tr
@@ -212,7 +215,10 @@ function AdminPage() {
                     <td className="py-3 pr-3">{r.name}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.phone}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.district}</td>
-                    <td className="py-3 pr-3 text-muted-foreground">{r.course}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.stream ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.guidance ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.study_location ?? "—"}</td>
+                    <td className="py-3 pr-3 text-muted-foreground">{r.parent_attending == null ? "—" : r.parent_attending ? "Yes" : "No"}</td>
                     <td className="py-3 pr-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="py-3 pr-3">
                       <button
