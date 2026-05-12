@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X, GraduationCap } from "lucide-react";
 
 const links = [
@@ -14,7 +14,15 @@ const links = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <motion.header
@@ -23,8 +31,8 @@ export function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="fixed top-0 inset-x-0 z-50"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-3">
-        <div className="glass rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between shadow-elevated">
+      <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-300 ${scrolled ? "mt-2" : "mt-3"}`}>
+        <div className={`glass rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-elevated transition-all duration-300 ${scrolled ? "py-2 bg-background/70" : "py-3"}`}>
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-gold rounded-lg blur-md opacity-60 group-hover:opacity-100 transition" />
