@@ -56,7 +56,10 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Eduvo Careers × Dr ACE. Crafted in Kochi.</p>
-          <p>Empowering 12,000+ Kerala students into India's top institutions.</p>
+          <div className="flex items-center gap-4">
+            <p>Empowering 12,000+ Kerala students.</p>
+            <Link to="/login" className="hover:text-foreground">Admin</Link>
+          </div>
         </div>
       </div>
     </footer>
