@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import { useState } from "react";
-import QRCode from "qrcode";
-import { Calendar, MapPin, CheckCircle2, Download, Ticket, ArrowRight } from "lucide-react";
+import { z } from "zod";
+import { Calendar, MapPin, CheckCircle2, Ticket, ArrowRight, AlertCircle } from "lucide-react";
 import { districts, courses } from "@/lib/mock-data";
 import { FadeIn, SectionLabel } from "@/components/site/Motion";
 import { Countdown } from "@/components/site/Countdown";
+import { supabase } from "@/integrations/supabase/client";
 
 const EXPO_DATE = new Date("2026-02-14T09:00:00+05:30");
 
@@ -14,40 +15,57 @@ export const Route = createFileRoute("/expo")({
     meta: [
       { title: "Eduvo Expo 2026 — Free Registration" },
       { name: "description", content: "Register free for the Eduvo Career Expo 2026, Kochi. 150+ colleges, on-spot counselling, scholarship desks." },
-      { property: "og:title", content: "Eduvo Expo 2026 — Free Registration" },
-      { property: "og:description", content: "Generate your QR ticket in under a minute." },
     ],
   }),
   component: ExpoPage,
 });
 
-type Form = { name: string; phone: string; district: string; course: string };
+const schema = z.object({
+  name: z.string().trim().min(2, "Enter your full name").max(80),
+  phone: z.string().regex(/^\d{10}$/, "Enter a 10-digit number"),
+  email: z.string().trim().email("Invalid email").max(120).optional().or(z.literal("")),
+  district: z.string().min(1, "Select a district"),
+  course: z.string().min(1, "Select a course"),
+});
+type Form = z.infer<typeof schema>;
+
+function makeTicketId() {
+  return `EXPO-2026-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
 
 function ExpoPage() {
-  const [form, setForm] = useState<Form>({ name: "", phone: "", district: "", course: "" });
-  const [qr, setQr] = useState<string | null>(null);
-  const [ticketId, setTicketId] = useState<string>("");
+  const navigate = useNavigate();
+  const [form, setForm] = useState<Form>({ name: "", phone: "", email: "", district: "", course: "" });
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const update = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [k]: e.target.value });
 
-  const valid = form.name.trim().length >= 2 && /^\d{10}$/.test(form.phone) && form.district && form.course;
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
+    setError(null);
+    const parsed = schema.safeParse(form);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Check the form");
+      return;
+    }
     setSubmitting(true);
-    const id = `EXPO-2026-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const payload = JSON.stringify({ id, ...form, event: "Eduvo Expo 2026" });
-    const dataUrl = await QRCode.toDataURL(payload, {
-      margin: 1,
-      width: 480,
-      color: { dark: "#0d1530", light: "#f4d27a" },
+    const ticket_id = makeTicketId();
+    const { error: dbError } = await supabase.from("expo_registrations").insert({
+      ticket_id,
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      email: parsed.data.email || null,
+      district: parsed.data.district,
+      course: parsed.data.course,
     });
-    setTicketId(id);
-    setQr(dataUrl);
     setSubmitting(false);
+    if (dbError) {
+      setError(dbError.message);
+      return;
+    }
+    navigate({ to: "/ticket/$ticketId", params: { ticketId: ticket_id } });
   };
 
   return (
@@ -67,113 +85,79 @@ function ExpoPage() {
           </div>
         </FadeIn>
 
-        <AnimatePresence mode="wait">
-          {!qr ? (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mt-12 grid lg:grid-cols-5 gap-6"
-            >
-              <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 sm:p-10 shadow-elevated">
-                <h2 className="font-display text-2xl">Register in under a minute</h2>
-                <p className="text-sm text-muted-foreground mt-1">We'll generate a QR ticket instantly.</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-12 grid lg:grid-cols-5 gap-6"
+        >
+          <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 sm:p-10 shadow-elevated">
+            <h2 className="font-display text-2xl">Register in under a minute</h2>
+            <p className="text-sm text-muted-foreground mt-1">We'll generate a QR ticket instantly.</p>
 
-                <div className="mt-7 grid sm:grid-cols-2 gap-4">
-                  <Field label="Full name">
-                    <input value={form.name} onChange={update("name")} placeholder="Aiswarya Nair" className="input" required />
-                  </Field>
-                  <Field label="WhatsApp number">
-                    <input value={form.phone} onChange={update("phone")} placeholder="9847474747" inputMode="numeric" maxLength={10} className="input" required />
-                  </Field>
-                  <Field label="District">
-                    <select value={form.district} onChange={update("district")} className="input" required>
-                      <option value="">Select district</option>
-                      {districts.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Interested course">
-                    <select value={form.course} onChange={update("course")} className="input" required>
-                      <option value="">Select course</option>
-                      {courses.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </Field>
-                </div>
+            <div className="mt-7 grid sm:grid-cols-2 gap-4">
+              <Field label="Full name">
+                <input value={form.name} onChange={update("name")} placeholder="Aiswarya Nair" maxLength={80} className="input" required />
+              </Field>
+              <Field label="WhatsApp number">
+                <input value={form.phone} onChange={update("phone")} placeholder="9847474747" inputMode="numeric" maxLength={10} className="input" required />
+              </Field>
+              <Field label="Email (optional)">
+                <input value={form.email} onChange={update("email")} placeholder="you@example.com" type="email" maxLength={120} className="input" />
+              </Field>
+              <Field label="District">
+                <select value={form.district} onChange={update("district")} className="input" required>
+                  <option value="">Select district</option>
+                  {districts.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </Field>
+              <Field label="Interested course">
+                <select value={form.course} onChange={update("course")} className="input" required>
+                  <option value="">Select course</option>
+                  {courses.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </Field>
+            </div>
 
-                <button
-                  type="submit"
-                  disabled={!valid || submitting}
-                  className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-gold text-primary-foreground font-semibold shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Generating..." : (<>Generate QR Ticket <ArrowRight className="w-4 h-4" /></>)}
-                </button>
-                <p className="mt-3 text-xs text-muted-foreground">By registering you agree to receive event reminders on WhatsApp.</p>
-              </form>
-
-              <div className="lg:col-span-2 glass-gold rounded-3xl p-7 sm:p-10 relative overflow-hidden">
-                <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/30 rounded-full blur-3xl" />
-                <div className="relative">
-                  <Ticket className="w-8 h-8 text-primary" />
-                  <h3 className="mt-4 font-display text-2xl">What you get</h3>
-                  <ul className="mt-4 space-y-2.5 text-sm">
-                    {[
-                      "Free entry both days",
-                      "On-spot counselling with admissions team",
-                      "Scholarship & finance desks",
-                      "Live aptitude analysis with Dr ACE",
-                      "Goodie bag from partner colleges",
-                    ].map((t) => (
-                      <li key={t} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {t}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            {error && (
+              <div className="mt-5 flex items-start gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="ticket"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-12 max-w-xl mx-auto"
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-8 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-gold text-primary-foreground font-semibold shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="glass rounded-3xl p-8 sm:p-10 shadow-elevated text-center relative overflow-hidden">
-                <div className="absolute inset-0 grid-bg opacity-30" />
-                <div className="relative">
-                  <div className="inline-flex items-center gap-2 glass-gold rounded-full px-3 py-1 text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Registration confirmed
-                  </div>
-                  <h2 className="mt-5 font-display text-3xl">You're in, {form.name.split(" ")[0]}!</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">Save this QR — show at entry.</p>
+              {submitting ? "Generating..." : (<>Generate QR Ticket <ArrowRight className="w-4 h-4" /></>)}
+            </button>
+            <p className="mt-3 text-xs text-muted-foreground">By registering you agree to receive event reminders on WhatsApp.</p>
+          </form>
 
-                  <div className="mt-7 inline-block bg-gradient-gold p-3 rounded-2xl shadow-glow">
-                    <img src={qr} alt="Expo ticket QR" width={240} height={240} className="rounded-lg" />
-                  </div>
-
-                  <div className="mt-5 text-sm">
-                    <div className="text-muted-foreground">Ticket ID</div>
-                    <div className="font-mono text-base text-gradient-gold">{ticketId}</div>
-                  </div>
-
-                  <div className="mt-7 flex flex-wrap justify-center gap-3">
-                    <a
-                      href={qr}
-                      download={`${ticketId}.png`}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-gold text-primary-foreground text-sm font-semibold"
-                    >
-                      <Download className="w-4 h-4" /> Download QR
-                    </a>
-                    <Link to="/" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass hover:glass-gold text-sm">
-                      Back home
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <div className="lg:col-span-2 glass-gold rounded-3xl p-7 sm:p-10 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/30 rounded-full blur-3xl" />
+            <div className="relative">
+              <Ticket className="w-8 h-8 text-primary" />
+              <h3 className="mt-4 font-display text-2xl">What you get</h3>
+              <ul className="mt-4 space-y-2.5 text-sm">
+                {[
+                  "Free entry both days",
+                  "On-spot counselling with admissions team",
+                  "Scholarship & finance desks",
+                  "Live aptitude analysis with Dr ACE",
+                  "Goodie bag from partner colleges",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/" className="mt-6 inline-block text-xs text-primary hover:text-gold-soft">
+                Already registered? Look up your ticket →
+              </Link>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       <style>{`

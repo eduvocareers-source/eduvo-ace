@@ -9,13 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExpoRouteImport } from './routes/expo'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollegesRouteImport } from './routes/colleges'
 import { Route as AptitudeRouteImport } from './routes/aptitude'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TicketTicketIdRouteImport } from './routes/ticket.$ticketId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExpoRoute = ExpoRouteImport.update({
   id: '/expo',
   path: '/expo',
@@ -41,63 +55,127 @@ const AptitudeRoute = AptitudeRouteImport.update({
   path: '/aptitude',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TicketTicketIdRoute = TicketTicketIdRouteImport.update({
+  id: '/ticket/$ticketId',
+  path: '/ticket/$ticketId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/aptitude': typeof AptitudeRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRoute
   '/expo': typeof ExpoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/ticket/$ticketId': typeof TicketTicketIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/aptitude': typeof AptitudeRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRoute
   '/expo': typeof ExpoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/ticket/$ticketId': typeof TicketTicketIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/aptitude': typeof AptitudeRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRoute
   '/expo': typeof ExpoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/ticket/$ticketId': typeof TicketTicketIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/aptitude' | '/colleges' | '/contact' | '/courses' | '/expo'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/aptitude' | '/colleges' | '/contact' | '/courses' | '/expo'
-  id:
-    | '__root__'
+  fullPaths:
     | '/'
+    | '/admin'
     | '/aptitude'
     | '/colleges'
     | '/contact'
     | '/courses'
     | '/expo'
+    | '/login'
+    | '/signup'
+    | '/ticket/$ticketId'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/admin'
+    | '/aptitude'
+    | '/colleges'
+    | '/contact'
+    | '/courses'
+    | '/expo'
+    | '/login'
+    | '/signup'
+    | '/ticket/$ticketId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/aptitude'
+    | '/colleges'
+    | '/contact'
+    | '/courses'
+    | '/expo'
+    | '/login'
+    | '/signup'
+    | '/ticket/$ticketId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AptitudeRoute: typeof AptitudeRoute
   CollegesRoute: typeof CollegesRoute
   ContactRoute: typeof ContactRoute
   CoursesRoute: typeof CoursesRoute
   ExpoRoute: typeof ExpoRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  TicketTicketIdRoute: typeof TicketTicketIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/expo': {
       id: '/expo'
       path: '/expo'
@@ -133,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AptitudeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -140,17 +225,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ticket/$ticketId': {
+      id: '/ticket/$ticketId'
+      path: '/ticket/$ticketId'
+      fullPath: '/ticket/$ticketId'
+      preLoaderRoute: typeof TicketTicketIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AptitudeRoute: AptitudeRoute,
   CollegesRoute: CollegesRoute,
   ContactRoute: ContactRoute,
   CoursesRoute: CoursesRoute,
   ExpoRoute: ExpoRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  TicketTicketIdRoute: TicketTicketIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
