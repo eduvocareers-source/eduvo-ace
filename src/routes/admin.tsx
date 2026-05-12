@@ -74,7 +74,8 @@ function AdminPage() {
       r.phone.includes(s) ||
       r.ticket_id.toLowerCase().includes(s) ||
       r.district.toLowerCase().includes(s) ||
-      r.course.toLowerCase().includes(s)
+      (r.stream ?? "").toLowerCase().includes(s) ||
+      (r.guidance ?? "").toLowerCase().includes(s)
     );
   }, [regs, q]);
 
@@ -85,9 +86,11 @@ function AdminPage() {
   }), [regs]);
 
   const exportCSV = () => {
-    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Course", "Checked In", "Registered At"];
+    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Registered At"];
     const rows = filtered.map((r) => [
-      r.ticket_id, r.name, r.phone, r.email ?? "", r.district, r.course,
+      r.ticket_id, r.name, r.phone, r.email ?? "", r.district,
+      r.stream ?? "", r.guidance ?? "", r.study_location ?? "",
+      r.parent_attending == null ? "" : r.parent_attending ? "Yes" : "No",
       r.checked_in ? "Yes" : "No", new Date(r.created_at).toISOString(),
     ]);
     const csv = [header, ...rows]
