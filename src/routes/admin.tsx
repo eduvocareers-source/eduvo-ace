@@ -22,7 +22,10 @@ type Reg = {
   phone: string;
   email: string | null;
   district: string;
-  course: string;
+  stream: string | null;
+  guidance: string | null;
+  study_location: string | null;
+  parent_attending: boolean | null;
   checked_in: boolean;
   created_at: string;
 };
