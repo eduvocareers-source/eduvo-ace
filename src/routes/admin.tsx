@@ -227,9 +227,10 @@ function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Stat icon={Users} label="Total registrations" value={stats.total} />
           <Stat icon={TicketCheck} label="Checked in" value={stats.checkedIn} />
+          <Stat icon={Clock} label="Pending" value={Math.max(0, stats.total - stats.checkedIn)} />
           <Stat icon={Calendar} label="Today" value={stats.today} />
         </div>
 
