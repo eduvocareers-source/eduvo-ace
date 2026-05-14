@@ -290,6 +290,7 @@ function AdminPage() {
                     <td className="py-3 pr-3 text-muted-foreground">{r.study_location ?? "—"}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.parent_attending == null ? "—" : r.parent_attending ? "Yes" : "No"}</td>
                     <td className="py-3 pr-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                    <td className="py-3 pr-3 text-xs text-muted-foreground">{r.checked_in_at ? new Date(r.checked_in_at).toLocaleString() : "—"}</td>
                     <td className="py-3 pr-3">
                       <button
                         onClick={() => toggleCheckIn(r)}
@@ -307,6 +308,22 @@ function AdminPage() {
           </div>
         </div>
       </div>
+
+      <QrScanner open={scanOpen} onClose={() => setScanOpen(false)} onScan={handleScan} />
+
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] px-4 py-2.5 rounded-xl text-sm shadow-elevated glass ${
+            toast.kind === "ok" ? "border border-primary/40" :
+            toast.kind === "warn" ? "border border-yellow-500/40" :
+            "border border-destructive/40 text-destructive"
+          }`}
+        >
+          {toast.msg}
+        </motion.div>
+      )}
     </section>
   );
 }
