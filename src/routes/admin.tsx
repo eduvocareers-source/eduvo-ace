@@ -41,6 +41,9 @@ function AdminPage() {
   const [regs, setRegs] = useState<Reg[]>([]);
   const [q, setQ] = useState("");
   const [fetching, setFetching] = useState(true);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [busyScan, setBusyScan] = useState(false);
 
   useEffect(() => {
     if (loading) return;
