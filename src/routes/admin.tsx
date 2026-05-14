@@ -28,8 +28,11 @@ type Reg = {
   study_location: string | null;
   parent_attending: boolean | null;
   checked_in: boolean;
+  checked_in_at: string | null;
   created_at: string;
 };
+
+type Toast = { kind: "ok" | "warn" | "err"; msg: string };
 
 function AdminPage() {
   const { user, loading } = useAuth();
