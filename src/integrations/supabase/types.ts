@@ -17,6 +17,7 @@ export type Database = {
       expo_registrations: {
         Row: {
           checked_in: boolean
+          checked_in_at: string | null
           course: string | null
           created_at: string
           district: string
@@ -33,6 +34,7 @@ export type Database = {
         }
         Insert: {
           checked_in?: boolean
+          checked_in_at?: string | null
           course?: string | null
           created_at?: string
           district: string
@@ -49,6 +51,7 @@ export type Database = {
         }
         Update: {
           checked_in?: boolean
+          checked_in_at?: string | null
           course?: string | null
           created_at?: string
           district?: string

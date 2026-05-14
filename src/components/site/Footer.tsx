@@ -22,10 +22,16 @@ export function Footer() {
               and our 14-year-strong admissions team.
             </p>
             <div className="flex items-center gap-3 mt-6">
-              {[Instagram, Facebook, Youtube].map((Icon, i) => (
+              {[
+                { Icon: Instagram, href: "https://instagram.com/eduvocareers" },
+                { Icon: Facebook, href: "https://facebook.com/eduvocareers" },
+                { Icon: Youtube, href: "https://youtube.com/@eduvocareers" },
+              ].map(({ Icon, href }, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-9 h-9 rounded-lg glass flex items-center justify-center hover:glass-gold transition"
                 >
                   <Icon className="w-4 h-4" />
@@ -47,9 +53,11 @@ export function Footer() {
           <div>
             <h4 className="font-display text-sm uppercase tracking-[0.2em] text-gradient-gold mb-4">Contact</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-primary" /> Malappuram, Kerala</li>
-              <li className="flex items-start gap-2"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 8592866008</li>
-              <li className="flex items-start gap-2"><Mail className="w-4 h-4 mt-0.5 text-primary" /> hello@eduvocareers.in</li>
+              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-primary" /> Opp. DUHSS Panakkad &amp; IKTHSS Cherukulamba, Malappuram</li>
+              <li><a href="tel:+916238995581" className="flex items-start gap-2 hover:text-foreground"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 6238995581 · Office</a></li>
+              <li><a href="tel:+919074445804" className="flex items-start gap-2 hover:text-foreground"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 9074445804 · Support</a></li>
+              <li><a href="https://wa.me/918592866008" target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 hover:text-foreground"><Phone className="w-4 h-4 mt-0.5 text-primary" /> +91 8592866008 · Admissions</a></li>
+              <li><a href="mailto:hello@eduvocareers.in" className="flex items-start gap-2 hover:text-foreground"><Mail className="w-4 h-4 mt-0.5 text-primary" /> hello@eduvocareers.in</a></li>
             </ul>
           </div>
         </div>

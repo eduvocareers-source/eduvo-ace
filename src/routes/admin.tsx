@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, LogOut, Search, Users, TicketCheck, Calendar, ShieldAlert } from "lucide-react";
+import { Download, LogOut, Search, Users, TicketCheck, Calendar, ShieldAlert, ScanLine, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, checkIsAdmin } from "@/lib/auth";
+import { QrScanner } from "@/components/site/QrScanner";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -27,8 +28,11 @@ type Reg = {
   study_location: string | null;
   parent_attending: boolean | null;
   checked_in: boolean;
+  checked_in_at: string | null;
   created_at: string;
 };
+
+type Toast = { kind: "ok" | "warn" | "err"; msg: string };
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -37,6 +41,9 @@ function AdminPage() {
   const [regs, setRegs] = useState<Reg[]>([]);
   const [q, setQ] = useState("");
   const [fetching, setFetching] = useState(true);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [busyScan, setBusyScan] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -62,9 +69,19 @@ function AdminPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "expo_registrations" }, (p) => {
         setRegs((prev) => [p.new as Reg, ...prev]);
       })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "expo_registrations" }, (p) => {
+        const next = p.new as Reg;
+        setRegs((prev) => prev.map((x) => x.id === next.id ? next : x));
+      })
       .subscribe();
     return () => { alive = false; supabase.removeChannel(ch); };
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2800);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -86,12 +103,14 @@ function AdminPage() {
   }), [regs]);
 
   const exportCSV = () => {
-    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Registered At"];
+    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Checked In At", "Registered At"];
     const rows = filtered.map((r) => [
       r.ticket_id, r.name, r.phone, r.email ?? "", r.district,
       r.stream ?? "", r.guidance ?? "", r.study_location ?? "",
       r.parent_attending == null ? "" : r.parent_attending ? "Yes" : "No",
-      r.checked_in ? "Yes" : "No", new Date(r.created_at).toISOString(),
+      r.checked_in ? "Yes" : "No",
+      r.checked_in_at ? new Date(r.checked_in_at).toISOString() : "",
+      new Date(r.created_at).toISOString(),
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -106,12 +125,58 @@ function AdminPage() {
   };
 
   const toggleCheckIn = async (r: Reg) => {
-    const { error } = await supabase
-      .from("expo_registrations")
-      .update({ checked_in: !r.checked_in })
-      .eq("id", r.id);
-    if (!error) setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, checked_in: !r.checked_in } : x));
+    const next = !r.checked_in;
+    const patch = { checked_in: next, checked_in_at: next ? new Date().toISOString() : null };
+    const { error } = await supabase.from("expo_registrations").update(patch).eq("id", r.id);
+    if (!error) setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, ...patch } : x));
   };
+
+  const extractTicketId = (raw: string): string | null => {
+    const t = raw.trim();
+    // Accept either a raw ticket id or a URL containing /ticket/<id>
+    const m = t.match(/ticket\/([A-Z0-9-]+)/i);
+    if (m) return m[1].toUpperCase();
+    if (/^EXPO-\d{4}-[A-Z0-9]+$/i.test(t)) return t.toUpperCase();
+    return null;
+  };
+
+  const handleScan = useCallback(async (raw: string) => {
+    if (busyScan) return;
+    const ticketId = extractTicketId(raw);
+    if (!ticketId) {
+      setToast({ kind: "err", msg: "Unrecognised QR. Expected an Eduvo ticket." });
+      return;
+    }
+    setBusyScan(true);
+    const { data, error } = await supabase
+      .from("expo_registrations")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .maybeSingle();
+    if (error || !data) {
+      setBusyScan(false);
+      setToast({ kind: "err", msg: `Ticket ${ticketId} not found.` });
+      return;
+    }
+    const r = data as Reg;
+    if (r.checked_in) {
+      setBusyScan(false);
+      const at = r.checked_in_at ? new Date(r.checked_in_at).toLocaleString() : "earlier";
+      setToast({ kind: "warn", msg: `${r.name} already checked in at ${at}.` });
+      return;
+    }
+    const now = new Date().toISOString();
+    const { error: upErr } = await supabase
+      .from("expo_registrations")
+      .update({ checked_in: true, checked_in_at: now })
+      .eq("id", r.id);
+    setBusyScan(false);
+    if (upErr) { setToast({ kind: "err", msg: upErr.message }); return; }
+    setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, checked_in: true, checked_in_at: now } : x));
+    setToast({ kind: "ok", msg: `Checked in: ${r.name} (${ticketId}).` });
+    setScanOpen(false);
+  }, [busyScan]);
+
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -150,6 +215,9 @@ function AdminPage() {
             <h1 className="font-display text-4xl">Expo Registrations</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setScanOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl glass hover:glass-gold text-sm font-medium">
+              <ScanLine className="w-4 h-4 text-primary" /> Scan QR
+            </button>
             <button onClick={exportCSV} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-gold text-primary-foreground text-sm font-semibold shadow-glow">
               <Download className="w-4 h-4" /> Export CSV
             </button>
@@ -159,9 +227,10 @@ function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Stat icon={Users} label="Total registrations" value={stats.total} />
           <Stat icon={TicketCheck} label="Checked in" value={stats.checkedIn} />
+          <Stat icon={Clock} label="Pending" value={Math.max(0, stats.total - stats.checkedIn)} />
           <Stat icon={Calendar} label="Today" value={stats.today} />
         </div>
 
@@ -189,16 +258,17 @@ function AdminPage() {
                   <th className="py-3 pr-3">Guidance</th>
                   <th className="py-3 pr-3">Study</th>
                   <th className="py-3 pr-3">Parent</th>
-                  <th className="py-3 pr-3">When</th>
+                  <th className="py-3 pr-3">Registered</th>
+                  <th className="py-3 pr-3">Checked-in</th>
                   <th className="py-3 pr-3">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {fetching && (
-                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
+                  <tr><td colSpan={11} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
                 )}
                 {!fetching && filtered.length === 0 && (
-                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
+                  <tr><td colSpan={11} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
                 )}
                 {filtered.map((r) => (
                   <motion.tr
@@ -220,6 +290,7 @@ function AdminPage() {
                     <td className="py-3 pr-3 text-muted-foreground">{r.study_location ?? "—"}</td>
                     <td className="py-3 pr-3 text-muted-foreground">{r.parent_attending == null ? "—" : r.parent_attending ? "Yes" : "No"}</td>
                     <td className="py-3 pr-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                    <td className="py-3 pr-3 text-xs text-muted-foreground">{r.checked_in_at ? new Date(r.checked_in_at).toLocaleString() : "—"}</td>
                     <td className="py-3 pr-3">
                       <button
                         onClick={() => toggleCheckIn(r)}
@@ -237,6 +308,22 @@ function AdminPage() {
           </div>
         </div>
       </div>
+
+      <QrScanner open={scanOpen} onClose={() => setScanOpen(false)} onScan={handleScan} />
+
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] px-4 py-2.5 rounded-xl text-sm shadow-elevated glass ${
+            toast.kind === "ok" ? "border border-primary/40" :
+            toast.kind === "warn" ? "border border-yellow-500/40" :
+            "border border-destructive/40 text-destructive"
+          }`}
+        >
+          {toast.msg}
+        </motion.div>
+      )}
     </section>
   );
 }
