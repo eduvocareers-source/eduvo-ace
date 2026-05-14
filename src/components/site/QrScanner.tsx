@@ -46,7 +46,9 @@ export function QrScanner({ open, onClose, onScan }: Props) {
       const s = ref.current;
       ref.current = null;
       if (s) {
-        s.stop().catch(() => undefined).finally(() => s.clear().catch(() => undefined));
+        s.stop().catch(() => undefined).finally(() => {
+          try { s.clear(); } catch { /* noop */ }
+        });
       }
     };
   }, [open, onScan]);
