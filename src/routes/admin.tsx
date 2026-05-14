@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, LogOut, Search, Users, TicketCheck, Calendar, ShieldAlert } from "lucide-react";
+import { Download, LogOut, Search, Users, TicketCheck, Calendar, ShieldAlert, ScanLine, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, checkIsAdmin } from "@/lib/auth";
+import { QrScanner } from "@/components/site/QrScanner";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
