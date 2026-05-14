@@ -215,6 +215,9 @@ function AdminPage() {
             <h1 className="font-display text-4xl">Expo Registrations</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setScanOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl glass hover:glass-gold text-sm font-medium">
+              <ScanLine className="w-4 h-4 text-primary" /> Scan QR
+            </button>
             <button onClick={exportCSV} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-gold text-primary-foreground text-sm font-semibold shadow-glow">
               <Download className="w-4 h-4" /> Export CSV
             </button>
