@@ -258,16 +258,17 @@ function AdminPage() {
                   <th className="py-3 pr-3">Guidance</th>
                   <th className="py-3 pr-3">Study</th>
                   <th className="py-3 pr-3">Parent</th>
-                  <th className="py-3 pr-3">When</th>
+                  <th className="py-3 pr-3">Registered</th>
+                  <th className="py-3 pr-3">Checked-in</th>
                   <th className="py-3 pr-3">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {fetching && (
-                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
+                  <tr><td colSpan={11} className="py-10 text-center text-muted-foreground">Loading registrations…</td></tr>
                 )}
                 {!fetching && filtered.length === 0 && (
-                  <tr><td colSpan={10} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
+                  <tr><td colSpan={11} className="py-10 text-center text-muted-foreground">No registrations match.</td></tr>
                 )}
                 {filtered.map((r) => (
                   <motion.tr
