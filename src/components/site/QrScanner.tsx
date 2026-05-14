@@ -10,7 +10,7 @@ type Props = {
 
 export function QrScanner({ open, onClose, onScan }: Props) {
   const elId = "qr-reader-region";
-  const ref = useRef<Html5Qrcode | null>(null);
+  const ref = useRef<Html5QrcodeType | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [last, setLast] = useState<string | null>(null);
 
@@ -22,12 +22,14 @@ export function QrScanner({ open, onClose, onScan }: Props) {
 
     const start = async () => {
       try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (cancelled) return;
         const scanner = new Html5Qrcode(elId, { verbose: false });
         ref.current = scanner;
         await scanner.start(
           { facingMode: "environment" },
           { fps: 12, qrbox: { width: 260, height: 260 } },
-          (decoded) => {
+          (decoded: string) => {
             if (cancelled) return;
             setLast(decoded);
             onScan(decoded);
