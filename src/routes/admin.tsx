@@ -103,12 +103,14 @@ function AdminPage() {
   }), [regs]);
 
   const exportCSV = () => {
-    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Registered At"];
+    const header = ["Ticket ID", "Name", "Phone", "Email", "District", "Stream", "Guidance", "Study", "Parent", "Checked In", "Checked In At", "Registered At"];
     const rows = filtered.map((r) => [
       r.ticket_id, r.name, r.phone, r.email ?? "", r.district,
       r.stream ?? "", r.guidance ?? "", r.study_location ?? "",
       r.parent_attending == null ? "" : r.parent_attending ? "Yes" : "No",
-      r.checked_in ? "Yes" : "No", new Date(r.created_at).toISOString(),
+      r.checked_in ? "Yes" : "No",
+      r.checked_in_at ? new Date(r.checked_in_at).toISOString() : "",
+      new Date(r.created_at).toISOString(),
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -123,12 +125,58 @@ function AdminPage() {
   };
 
   const toggleCheckIn = async (r: Reg) => {
-    const { error } = await supabase
-      .from("expo_registrations")
-      .update({ checked_in: !r.checked_in })
-      .eq("id", r.id);
-    if (!error) setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, checked_in: !r.checked_in } : x));
+    const next = !r.checked_in;
+    const patch = { checked_in: next, checked_in_at: next ? new Date().toISOString() : null };
+    const { error } = await supabase.from("expo_registrations").update(patch).eq("id", r.id);
+    if (!error) setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, ...patch } : x));
   };
+
+  const extractTicketId = (raw: string): string | null => {
+    const t = raw.trim();
+    // Accept either a raw ticket id or a URL containing /ticket/<id>
+    const m = t.match(/ticket\/([A-Z0-9-]+)/i);
+    if (m) return m[1].toUpperCase();
+    if (/^EXPO-\d{4}-[A-Z0-9]+$/i.test(t)) return t.toUpperCase();
+    return null;
+  };
+
+  const handleScan = useCallback(async (raw: string) => {
+    if (busyScan) return;
+    const ticketId = extractTicketId(raw);
+    if (!ticketId) {
+      setToast({ kind: "err", msg: "Unrecognised QR. Expected an Eduvo ticket." });
+      return;
+    }
+    setBusyScan(true);
+    const { data, error } = await supabase
+      .from("expo_registrations")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .maybeSingle();
+    if (error || !data) {
+      setBusyScan(false);
+      setToast({ kind: "err", msg: `Ticket ${ticketId} not found.` });
+      return;
+    }
+    const r = data as Reg;
+    if (r.checked_in) {
+      setBusyScan(false);
+      const at = r.checked_in_at ? new Date(r.checked_in_at).toLocaleString() : "earlier";
+      setToast({ kind: "warn", msg: `${r.name} already checked in at ${at}.` });
+      return;
+    }
+    const now = new Date().toISOString();
+    const { error: upErr } = await supabase
+      .from("expo_registrations")
+      .update({ checked_in: true, checked_in_at: now })
+      .eq("id", r.id);
+    setBusyScan(false);
+    if (upErr) { setToast({ kind: "err", msg: upErr.message }); return; }
+    setRegs((prev) => prev.map((x) => x.id === r.id ? { ...x, checked_in: true, checked_in_at: now } : x));
+    setToast({ kind: "ok", msg: `Checked in: ${r.name} (${ticketId}).` });
+    setScanOpen(false);
+  }, [busyScan]);
+
 
   const signOut = async () => {
     await supabase.auth.signOut();
