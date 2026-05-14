@@ -69,9 +69,19 @@ function AdminPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "expo_registrations" }, (p) => {
         setRegs((prev) => [p.new as Reg, ...prev]);
       })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "expo_registrations" }, (p) => {
+        const next = p.new as Reg;
+        setRegs((prev) => prev.map((x) => x.id === next.id ? next : x));
+      })
       .subscribe();
     return () => { alive = false; supabase.removeChannel(ch); };
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2800);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
